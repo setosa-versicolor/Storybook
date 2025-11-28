@@ -169,6 +169,265 @@ body {
   color: #2e7d32;
 }
 
+.top-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.library-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--parchment);
+  border: 2px solid var(--warm-brown);
+  border-radius: 12px;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  color: var(--warm-brown);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.library-button:hover {
+  background: white;
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.library-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--coral);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== LIBRARY SCREEN ===== */
+.library-screen {
+  overflow-y: auto;
+  padding-top: 1rem;
+  padding-bottom: 2rem;
+}
+
+.library-container {
+  width: 100%;
+  max-width: 600px;
+}
+
+.library-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.library-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 6vw, 2rem);
+  color: var(--deep-purple);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.library-back {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 2px solid var(--parchment);
+  border-radius: 25px;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--soft-purple);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.library-back:hover {
+  background: var(--parchment);
+}
+
+.library-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--soft-purple);
+}
+
+.library-empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.library-empty h3 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--deep-purple);
+}
+
+.library-empty p {
+  font-family: var(--font-body);
+  font-size: 1rem;
+}
+
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.library-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.library-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.library-card-image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  background: var(--parchment);
+}
+
+.library-card-placeholder {
+  width: 100%;
+  aspect-ratio: 1;
+  background: linear-gradient(145deg, var(--deep-purple) 0%, var(--soft-purple) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+}
+
+.library-card-info {
+  padding: 0.75rem;
+}
+
+.library-card-title {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.library-card-date {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: #999;
+  margin-top: 0.25rem;
+}
+
+.library-card-delete {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 28px;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.library-card:hover .library-card-delete {
+  opacity: 1;
+}
+
+.library-card-delete:hover {
+  background: var(--coral);
+}
+
+/* Save button in book view */
+.save-button {
+  position: fixed;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  background: white;
+  border: 2px solid var(--parchment);
+  border-radius: 25px;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--soft-purple);
+  cursor: pointer;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.save-button:hover {
+  background: var(--parchment);
+}
+
+.save-button.saved {
+  background: #e8f5e9;
+  border-color: var(--sage);
+  color: #2e7d32;
+}
+
+/* Toast notification */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--ink);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  z-index: 2000;
+  opacity: 0;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 .prompt-form {
   display: flex;
   flex-direction: column;
@@ -947,9 +1206,15 @@ body {
       </div>
 
 ```
-  <button id="api-key-btn" class="api-key-button" onclick="showModal()">
-    <span>🔑</span> Enter OpenAI API Key
-  </button>
+  <div class="top-buttons">
+    <button id="api-key-btn" class="api-key-button" onclick="showModal()">
+      <span>🔑</span> Enter OpenAI API Key
+    </button>
+    <button id="library-btn" class="library-button" onclick="showLibrary()">
+      <span>📚</span> My Library
+      <span id="library-count" class="library-count" style="display: none;">0</span>
+    </button>
+  </div>
 
   <form class="prompt-form" onsubmit="generateStory(event)">
     <label class="prompt-label" for="story-prompt">What shall your story be about?</label>
@@ -1003,6 +1268,9 @@ body {
 
   <div id="book-screen" class="screen hidden book-screen">
     <button class="back-button" onclick="goBack()">← Back</button>
+    <button id="save-btn" class="save-button" onclick="toggleSaveStory()">
+      <span id="save-icon">💾</span> <span id="save-text">Save</span>
+    </button>
     <div class="progress-bar">
       <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
     </div>
@@ -1051,6 +1319,22 @@ body {
     </div>
   </div>
 
+  <!-- LIBRARY SCREEN -->
+
+  <div id="library-screen" class="screen hidden library-screen">
+    <div class="library-container">
+      <div class="library-header">
+        <h2 class="library-title">📚 My Library</h2>
+        <button class="library-back" onclick="hideLibrary()">← Back</button>
+      </div>
+      <div id="library-content"></div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+
+  <div id="toast" class="toast"></div>
+
   <script>
     // State
     let apiKey = localStorage.getItem('openai_api_key') || '';
@@ -1060,12 +1344,15 @@ body {
     let touchStartX = 0;
     let touchEndX = 0;
     let isAnimating = false;
+    let currentStoryId = null; // Track if viewing a saved story
+    let isFromLibrary = false; // Track if we came from library
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
       if (apiKey) {
         updateApiKeyUI(true);
       }
+      updateLibraryCount();
       document.addEventListener('keydown', handleKeyDown);
     });
 
@@ -1542,6 +1829,12 @@ Generate a children's book illustration following the style guide exactly.`;
       document.getElementById('prompt-screen').classList.toggle('hidden', name !== 'prompt');
       document.getElementById('loading-screen').classList.toggle('hidden', name !== 'loading');
       document.getElementById('book-screen').classList.toggle('hidden', name !== 'book');
+      document.getElementById('library-screen').classList.toggle('hidden', name !== 'library');
+      
+      // Update save button state when showing book
+      if (name === 'book') {
+        updateSaveButtonState();
+      }
     }
 
     function setLoadingMessage(msg) {
@@ -1559,8 +1852,176 @@ Generate a children's book illustration following the style guide exactly.`;
     }
 
     function goBack() {
-      showScreen('prompt');
+      if (isFromLibrary) {
+        showLibrary();
+        isFromLibrary = false;
+      } else {
+        showScreen('prompt');
+      }
       story = null;
+      currentStoryId = null;
+    }
+
+    // ===== LIBRARY FUNCTIONS =====
+    
+    function getLibrary() {
+      const lib = localStorage.getItem('whimsy_tales_library');
+      return lib ? JSON.parse(lib) : [];
+    }
+
+    function saveLibrary(library) {
+      localStorage.setItem('whimsy_tales_library', JSON.stringify(library));
+      updateLibraryCount();
+    }
+
+    function updateLibraryCount() {
+      const library = getLibrary();
+      const countEl = document.getElementById('library-count');
+      if (library.length > 0) {
+        countEl.textContent = library.length;
+        countEl.style.display = 'flex';
+      } else {
+        countEl.style.display = 'none';
+      }
+    }
+
+    function generateStoryId() {
+      return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+
+    function showLibrary() {
+      renderLibrary();
+      showScreen('library');
+    }
+
+    function hideLibrary() {
+      showScreen('prompt');
+    }
+
+    function renderLibrary() {
+      const library = getLibrary();
+      const container = document.getElementById('library-content');
+
+      if (library.length === 0) {
+        container.innerHTML = `
+          <div class="library-empty">
+            <div class="library-empty-icon">📚</div>
+            <h3>No saved stories yet</h3>
+            <p>Create a story and tap "Save" to add it to your library!</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Sort by date, newest first
+      const sorted = [...library].sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+
+      container.innerHTML = `
+        <div class="library-grid">
+          ${sorted.map(item => {
+            const coverImage = item.story.pages[0]?.imageUrl;
+            const date = new Date(item.savedAt).toLocaleDateString();
+            return `
+              <div class="library-card" onclick="openSavedStory('${item.id}')">
+                ${coverImage 
+                  ? `<img src="${coverImage}" alt="${item.story.title}" class="library-card-image">`
+                  : `<div class="library-card-placeholder">📖</div>`
+                }
+                <div class="library-card-info">
+                  <div class="library-card-title">${item.story.title}</div>
+                  <div class="library-card-date">${date}</div>
+                </div>
+                <button class="library-card-delete" onclick="event.stopPropagation(); deleteStory('${item.id}')" title="Delete story">×</button>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function openSavedStory(id) {
+      const library = getLibrary();
+      const item = library.find(i => i.id === id);
+      
+      if (item) {
+        story = item.story;
+        currentStoryId = id;
+        currentPage = 0;
+        totalPages = story.pages.length + 2;
+        isFromLibrary = true;
+        showScreen('book');
+        renderBook();
+      }
+    }
+
+    function deleteStory(id) {
+      if (!confirm('Are you sure you want to delete this story?')) return;
+      
+      let library = getLibrary();
+      library = library.filter(item => item.id !== id);
+      saveLibrary(library);
+      renderLibrary();
+      showToast('🗑️ Story deleted');
+    }
+
+    function toggleSaveStory() {
+      if (!story) return;
+
+      const library = getLibrary();
+      
+      if (currentStoryId) {
+        // Already saved - remove it
+        const newLibrary = library.filter(item => item.id !== currentStoryId);
+        saveLibrary(newLibrary);
+        currentStoryId = null;
+        updateSaveButtonState();
+        showToast('📖 Removed from library');
+      } else {
+        // Not saved - save it
+        const id = generateStoryId();
+        library.push({
+          id: id,
+          story: story,
+          savedAt: new Date().toISOString()
+        });
+        saveLibrary(library);
+        currentStoryId = id;
+        updateSaveButtonState();
+        showToast('💾 Saved to library!');
+      }
+    }
+
+    function updateSaveButtonState() {
+      const saveBtn = document.getElementById('save-btn');
+      const saveIcon = document.getElementById('save-icon');
+      const saveText = document.getElementById('save-text');
+      
+      if (currentStoryId) {
+        saveBtn.classList.add('saved');
+        saveIcon.textContent = '✓';
+        saveText.textContent = 'Saved';
+      } else {
+        saveBtn.classList.remove('saved');
+        saveIcon.textContent = '💾';
+        saveText.textContent = 'Save';
+      }
+    }
+
+    function isStorySaved() {
+      if (!story) return false;
+      const library = getLibrary();
+      return library.some(item => item.story.title === story.title);
+    }
+
+    // Toast notification
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('visible');
+      
+      setTimeout(() => {
+        toast.classList.remove('visible');
+      }, 2500);
     }
   </script>
 
