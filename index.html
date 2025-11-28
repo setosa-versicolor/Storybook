@@ -1172,16 +1172,30 @@ Your stories should:
 - Have a light-hearted, playful tone
 - Include a satisfying ending
 
+CRITICAL: You must also create a consistent visual style guide that will be used for ALL illustrations.
+
 Respond with a JSON object:
 {
   "title": "The Story Title",
+  "visualStyle": {
+    "artStyle": "Describe the specific art style (e.g., 'soft watercolor with bold outlines', 'whimsical gouache painting', 'cute vector illustration style')",
+    "colorPalette": "List 4-5 specific colors that dominate the book (e.g., 'warm golden yellows, soft coral pinks, sky blue, cream white, forest green')",
+    "characters": {
+      "mainCharacter": "Detailed physical description of the main character that stays consistent (species, size, colors, distinguishing features, clothing/accessories)",
+      "supportingCharacters": "Descriptions of any recurring supporting characters"
+    },
+    "settingStyle": "Describe the overall look of backgrounds and environments",
+    "moodAndLighting": "Describe the lighting and mood (e.g., 'warm afternoon sunlight, cozy and cheerful atmosphere')"
+  },
   "pages": [
     {
       "text": "The rhyming verse",
-      "imagePrompt": "Detailed illustration description"
+      "imagePrompt": "Scene-specific description (what's happening, where, character poses/expressions). Do NOT repeat the style info here - just describe the scene."
     }
   ]
-}`;
+}
+
+The visualStyle will be prepended to each image prompt automatically, so each page's imagePrompt should only describe WHAT IS HAPPENING in that specific scene, not the art style or character descriptions.`;
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -1212,14 +1226,120 @@ Respond with a JSON object:
 
     async function generateImages(storyData) {
       const pages = [...storyData.pages];
+      
+      // Build the visual style context
+      const style = storyData.visualStyle;
+      const styleContext = `You are illustrating a children's picture book called "${storyData.title}". 
+      
+You MUST maintain PERFECT visual consistency across ALL ${pages.length} images in this book.
+
+STYLE GUIDE (use for EVERY image):
+- Art Style: ${style.artStyle}
+- Color Palette: ${style.colorPalette}
+- Main Character: ${style.characters.mainCharacter}
+${style.characters.supportingCharacters ? `- Supporting Characters: ${style.characters.supportingCharacters}` : ''}
+- Setting Style: ${style.settingStyle}
+- Mood/Lighting: ${style.moodAndLighting}
+
+The main character must look IDENTICAL in every single image - same colors, same proportions, same features, same clothing/accessories. This is critical for a cohesive picture book.`;
+
+      // Use Responses API with previous_response_id to maintain conversation context
+      let previousResponseId = null;
 
       for (let i = 0; i < pages.length; i++) {
         setLoadingMessage(`Painting illustration ${i + 1} of ${pages.length}...`);
+        
         try {
-          const imageUrl = await generateImage(pages[i].imagePrompt);
+          // Build the input for this request
+          let input;
+          if (i === 0) {
+            // First image: establish the style
+            input = `${styleContext}
+
+Now generate illustration 1 of ${pages.length}.
+Scene: ${pages[i].imagePrompt}
+
+Create this image following the style guide exactly. This establishes the visual look for all subsequent images.`;
+          } else {
+            // Subsequent images: reference previous context
+            input = `Generate illustration ${i + 1} of ${pages.length} for this same children's book.
+
+Scene: ${pages[i].imagePrompt}
+
+CRITICAL: The main character and art style must look EXACTLY the same as in the previous ${i} illustration(s). Same character design, same colors, same art style.`;
+          }
+
+          const requestBody = {
+            model: 'gpt-4o',
+            input: input,
+            tools: [{ type: 'image_generation' }]
+          };
+
+          // Add previous_response_id to maintain conversation context
+          if (previousResponseId) {
+            requestBody.previous_response_id = previousResponseId;
+          }
+
+          const response = await fetch('https://api.openai.com/v1/responses', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify(requestBody)
+          });
+
+          if (!response.ok) {
+            const err = await response.json();
+            console.error('Responses API error:', err);
+            
+            // Fallback to direct image generation if Responses API fails
+            console.log('Falling back to direct image generation...');
+            const fallbackUrl = await generateImageFallback(styleContext, pages[i].imagePrompt, i, pages.length);
+            pages[i].imageUrl = fallbackUrl;
+            continue;
+          }
+
+          const data = await response.json();
+          
+          // Store response ID for next iteration to maintain context
+          previousResponseId = data.id;
+
+          // Extract image from the response
+          let imageUrl = null;
+          
+          if (data.output) {
+            for (const item of data.output) {
+              if (item.type === 'image_generation_call' && item.result) {
+                // Image data could be base64 or URL
+                if (item.result.startsWith('data:') || item.result.startsWith('http')) {
+                  imageUrl = item.result;
+                } else {
+                  // Assume base64
+                  imageUrl = `data:image/png;base64,${item.result}`;
+                }
+                break;
+              }
+              // Also check for image content in messages
+              if (item.type === 'message' && item.content) {
+                for (const content of item.content) {
+                  if (content.type === 'image' && content.image) {
+                    if (content.image.url) {
+                      imageUrl = content.image.url;
+                    } else if (content.image.data) {
+                      imageUrl = `data:image/png;base64,${content.image.data}`;
+                    }
+                    break;
+                  }
+                }
+              }
+            }
+          }
+
           pages[i].imageUrl = imageUrl;
+
         } catch (err) {
-          console.error(`Image ${i} failed:`, err);
+          console.error(`Image ${i + 1} failed:`, err);
           pages[i].imageUrl = null;
         }
       }
@@ -1227,8 +1347,13 @@ Respond with a JSON object:
       return { ...storyData, pages };
     }
 
-    async function generateImage(prompt) {
-      const enhancedPrompt = `Children's book illustration, whimsical and colorful: ${prompt}. Style: soft watercolor, friendly characters, warm lighting, playful atmosphere.`;
+    // Fallback function using gpt-image-1 directly if Responses API is unavailable
+    async function generateImageFallback(styleContext, scenePrompt, pageNum, totalPages) {
+      const fullPrompt = `${styleContext}
+
+Page ${pageNum + 1} of ${totalPages}: ${scenePrompt}
+
+Generate a children's book illustration following the style guide exactly.`;
 
       const response = await fetch('https://api.openai.com/v1/images/generations', {
         method: 'POST',
@@ -1237,11 +1362,11 @@ Respond with a JSON object:
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: 'dall-e-3',
-          prompt: enhancedPrompt,
+          model: 'gpt-image-1',
+          prompt: fullPrompt,
           n: 1,
           size: '1024x1024',
-          quality: 'standard'
+          quality: 'medium'
         })
       });
 
@@ -1250,8 +1375,17 @@ Respond with a JSON object:
       }
 
       const data = await response.json();
-      return data.data[0].url;
+      if (data.data && data.data[0]) {
+        if (data.data[0].b64_json) {
+          return `data:image/png;base64,${data.data[0].b64_json}`;
+        } else if (data.data[0].url) {
+          return data.data[0].url;
+        }
+      }
+      return null;
     }
+
+    // Removed standalone generateImage function - now handled in generateImages with conversation context
 
     // Book rendering
     function renderBook() {
