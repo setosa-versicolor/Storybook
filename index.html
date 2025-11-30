@@ -100,12 +100,26 @@ body {
   padding: clamp(1rem, 5vw, 2rem);
   z-index: 1;
   transition: opacity 0.4s ease, transform 0.4s ease;
+  overflow-y: auto;
 }
 
 .screen.hidden {
   opacity: 0;
   pointer-events: none;
   transform: scale(0.95);
+}
+
+/* Allow prompt screen to scroll on small screens */
+#prompt-screen {
+  justify-content: flex-start;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+@media (min-height: 700px) {
+  #prompt-screen {
+    justify-content: center;
+  }
 }
 
 /* ===== PROMPT SCREEN ===== */
@@ -1033,14 +1047,16 @@ body {
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  z-index: 1000;
+  z-index: 9999;
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .modal-overlay.visible {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto;
 }
 
@@ -1409,12 +1425,18 @@ body {
     function showModal() {
       document.getElementById('api-key-input').value = apiKey;
       document.getElementById('modal').classList.add('visible');
+      // Focus the input after a brief delay for the animation
+      setTimeout(() => {
+        document.getElementById('api-key-input').focus();
+      }, 100);
     }
 
     function hideModal(e) {
-      if (!e || e.target === document.getElementById('modal')) {
-        document.getElementById('modal').classList.remove('visible');
+      // If called with an event (from overlay click), only close if clicking the overlay itself
+      if (e && e.type === 'click' && e.target !== document.getElementById('modal')) {
+        return;
       }
+      document.getElementById('modal').classList.remove('visible');
     }
 
     function toggleKeyVisibility() {
