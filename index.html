@@ -488,6 +488,68 @@
       color: #999;
     }
 
+    .length-selector {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .length-label {
+      font-family: var(--font-ui);
+      font-size: 0.9rem;
+      color: var(--soft-purple);
+    }
+
+    .length-options {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .length-option {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.75rem 0.5rem;
+      background: white;
+      border: 2px solid var(--parchment);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .length-option:hover {
+      border-color: var(--soft-purple);
+      background: #faf8ff;
+    }
+
+    .length-option.active {
+      border-color: var(--deep-purple);
+      background: linear-gradient(135deg, #f5f0ff 0%, #ebe0ff 100%);
+    }
+
+    .length-icon {
+      font-size: 1.25rem;
+    }
+
+    .length-name {
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .length-desc {
+      font-family: var(--font-ui);
+      font-size: 0.7rem;
+      color: #999;
+    }
+
+    .length-option.active .length-name {
+      color: var(--deep-purple);
+    }
+
     .submit-button {
       display: flex;
       align-items: center;
@@ -1282,6 +1344,26 @@
           <textarea id="story-prompt" class="prompt-input" placeholder="A brave little toaster on an epic quest..." rows="3" maxlength="500" oninput="updateCharCount()"></textarea>
           <span id="char-count" class="char-count">0/500</span>
         </div>
+        <div class="length-selector">
+          <label class="length-label">Story length:</label>
+          <div class="length-options">
+            <button type="button" class="length-option" data-length="short" onclick="selectLength(this)">
+              <span class="length-icon">📄</span>
+              <span class="length-name">Short</span>
+              <span class="length-desc">3-4 pages</span>
+            </button>
+            <button type="button" class="length-option active" data-length="medium" onclick="selectLength(this)">
+              <span class="length-icon">📑</span>
+              <span class="length-name">Medium</span>
+              <span class="length-desc">5-6 pages</span>
+            </button>
+            <button type="button" class="length-option" data-length="long" onclick="selectLength(this)">
+              <span class="length-icon">📚</span>
+              <span class="length-name">Long</span>
+              <span class="length-desc">7-8 pages</span>
+            </button>
+          </div>
+        </div>
         <button type="submit" id="submit-btn" class="submit-button" disabled>
           <span>Create My Story</span>
           <span>✨</span>
@@ -1396,7 +1478,8 @@
     let isAnimating = false;
     let currentStoryId = null;
     let isFromLibrary = false;
-    let lastErrorDetails = null; // Store last error for details display
+    let lastErrorDetails = null;
+    let storyLength = 'medium'; // 'short', 'medium', 'long' // Store last error for details display
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
@@ -1473,6 +1556,12 @@
       updateCharCount();
     }
 
+    function selectLength(btn) {
+      document.querySelectorAll('.length-option').forEach(el => el.classList.remove('active'));
+      btn.classList.add('active');
+      storyLength = btn.dataset.length;
+    }
+
     // Story generation
     async function generateStory(e) {
       e.preventDefault();
@@ -1507,11 +1596,18 @@
     }
 
     async function callOpenAI(prompt) {
+      const lengthConfig = {
+        short: { pages: '3-4', desc: 'short' },
+        medium: { pages: '5-6', desc: 'medium-length' },
+        long: { pages: '7-8', desc: 'longer' }
+      };
+      const config = lengthConfig[storyLength] || lengthConfig.medium;
+
       const systemPrompt = `You are a whimsical children's book author who writes humorous rhyming stories. 
 Your stories should:
 - Be funny and engaging for all ages
 - Use AABB or ABAB rhyme schemes consistently
-- Have 6-8 short verses/pages (2-4 lines each)
+- Have exactly ${config.pages} short verses/pages (2-4 lines each) - this is a ${config.desc} story
 - Include vivid, imaginative imagery
 - Have a light-hearted, playful tone
 - Include a satisfying ending
