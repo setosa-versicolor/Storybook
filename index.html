@@ -1652,7 +1652,7 @@ SCENE: `;
       if (details) {
         html += `
           <button class="error-details-toggle" onclick="toggleErrorDetails()">
-            Show error details ▼
+            Show error details [+]
           </button>
           <div id="error-details" class="error-details">
             <div class="error-details-header">API Error Details:</div>
@@ -1675,10 +1675,10 @@ SCENE: `;
       
       if (detailsEl.classList.contains('visible')) {
         detailsEl.classList.remove('visible');
-        toggleBtn.textContent = 'Show error details ▼';
+        toggleBtn.textContent = 'Show error details [+]';
       } else {
         detailsEl.classList.add('visible');
-        toggleBtn.textContent = 'Hide error details ▲';
+        toggleBtn.textContent = 'Hide error details [-]';
       }
     }
 
