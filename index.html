@@ -244,6 +244,8 @@
       align-items: center;
       justify-content: space-between;
       margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
     }
 
     .library-title {
@@ -253,6 +255,42 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
+    }
+
+    .library-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .library-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.85rem;
+      background: white;
+      border: 2px solid var(--parchment);
+      border-radius: 25px;
+      font-family: var(--font-ui);
+      font-size: 0.8rem;
+      color: var(--soft-purple);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .library-btn:hover {
+      background: var(--parchment);
+      border-color: var(--soft-purple);
+    }
+
+    .library-btn.primary {
+      background: linear-gradient(135deg, var(--sage) 0%, #6b9b5a 100%);
+      border-color: var(--sage);
+      color: white;
+    }
+
+    .library-btn.primary:hover {
+      filter: brightness(1.1);
     }
 
     .library-back {
@@ -272,6 +310,21 @@
 
     .library-back:hover {
       background: var(--parchment);
+    }
+
+    .library-storage-info {
+      width: 100%;
+      font-family: var(--font-ui);
+      font-size: 0.75rem;
+      color: #999;
+      text-align: right;
+      margin-top: -0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Hidden file input */
+    .hidden-input {
+      display: none;
     }
 
     .library-empty {
@@ -1507,8 +1560,18 @@
     <div class="library-container">
       <div class="library-header">
         <h2 class="library-title">📚 My Library</h2>
-        <button class="library-back" onclick="hideLibrary()">← Back</button>
+        <div class="library-actions">
+          <button class="library-btn" onclick="exportLibrary()" title="Export all stories">
+            📤 Export
+          </button>
+          <button class="library-btn primary" onclick="document.getElementById('import-input').click()" title="Import stories">
+            📥 Import
+          </button>
+          <input type="file" id="import-input" class="hidden-input" accept=".json" onchange="importLibrary(event)">
+          <button class="library-back" onclick="hideLibrary()">← Back</button>
+        </div>
       </div>
+      <div id="library-storage-info" class="library-storage-info"></div>
       <div id="library-content"></div>
     </div>
   </div>
@@ -1531,7 +1594,15 @@
     let storyLength = 'medium'; // 'short', 'medium', 'long' // Store last error for details display
 
     // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Initialize IndexedDB first
+      try {
+        await initDB();
+        await migrateFromLocalStorage();
+      } catch (e) {
+        console.error('Failed to initialize database:', e);
+      }
+      
       if (apiKey) {
         updateApiKeyUI(true);
       }
@@ -2042,26 +2113,130 @@ You will be creating ${pages.length} illustrations for this book. Each illustrat
       currentStoryId = null;
     }
 
-    // ===== LIBRARY FUNCTIONS =====
+    // ===== INDEXEDDB LIBRARY FUNCTIONS =====
     
+    const DB_NAME = 'whimsy_tales_db';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'stories';
+    let db = null;
+
+    // Initialize IndexedDB
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        
+        request.onerror = () => reject(request.error);
+        
+        request.onsuccess = () => {
+          db = request.result;
+          resolve(db);
+        };
+        
+        request.onupgradeneeded = (event) => {
+          const database = event.target.result;
+          if (!database.objectStoreNames.contains(STORE_NAME)) {
+            const store = database.createObjectStore(STORE_NAME, { keyPath: 'id' });
+            store.createIndex('savedAt', 'savedAt', { unique: false });
+          }
+        };
+      });
+    }
+
+    // Migrate from localStorage to IndexedDB (one-time)
+    async function migrateFromLocalStorage() {
+      const oldData = localStorage.getItem('whimsy_tales_library');
+      if (oldData) {
+        try {
+          const library = JSON.parse(oldData);
+          if (library.length > 0) {
+            for (const item of library) {
+              await addStoryToDB(item);
+            }
+            localStorage.removeItem('whimsy_tales_library');
+            console.log('Migrated', library.length, 'stories from localStorage to IndexedDB');
+          }
+        } catch (e) {
+          console.error('Migration failed:', e);
+        }
+      }
+    }
+
+    // Get all stories from IndexedDB
     function getLibrary() {
-      const lib = localStorage.getItem('whimsy_tales_library');
-      return lib ? JSON.parse(lib) : [];
+      return new Promise((resolve, reject) => {
+        if (!db) {
+          resolve([]);
+          return;
+        }
+        const transaction = db.transaction(STORE_NAME, 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.getAll();
+        
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+      });
     }
 
-    function saveLibrary(library) {
-      localStorage.setItem('whimsy_tales_library', JSON.stringify(library));
-      updateLibraryCount();
+    // Add a story to IndexedDB
+    function addStoryToDB(item) {
+      return new Promise((resolve, reject) => {
+        if (!db) {
+          reject(new Error('Database not initialized'));
+          return;
+        }
+        const transaction = db.transaction(STORE_NAME, 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.put(item);
+        
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
     }
 
-    function updateLibraryCount() {
-      const library = getLibrary();
-      const countEl = document.getElementById('library-count');
-      if (library.length > 0) {
-        countEl.textContent = library.length;
-        countEl.style.display = 'flex';
-      } else {
-        countEl.style.display = 'none';
+    // Delete a story from IndexedDB
+    function deleteStoryFromDB(id) {
+      return new Promise((resolve, reject) => {
+        if (!db) {
+          reject(new Error('Database not initialized'));
+          return;
+        }
+        const transaction = db.transaction(STORE_NAME, 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.delete(id);
+        
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    // Get a single story by ID
+    function getStoryById(id) {
+      return new Promise((resolve, reject) => {
+        if (!db) {
+          resolve(null);
+          return;
+        }
+        const transaction = db.transaction(STORE_NAME, 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.get(id);
+        
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function updateLibraryCount() {
+      try {
+        const library = await getLibrary();
+        const countEl = document.getElementById('library-count');
+        if (library.length > 0) {
+          countEl.textContent = library.length;
+          countEl.style.display = 'flex';
+        } else {
+          countEl.style.display = 'none';
+        }
+      } catch (e) {
+        console.error('Error updating library count:', e);
       }
     }
 
@@ -2078,94 +2253,233 @@ You will be creating ${pages.length} illustrations for this book. Each illustrat
       showScreen('prompt');
     }
 
-    function renderLibrary() {
-      const library = getLibrary();
+    async function renderLibrary() {
       const container = document.getElementById('library-content');
+      const storageInfo = document.getElementById('library-storage-info');
+      
+      try {
+        const library = await getLibrary();
+        
+        // Update storage info
+        if (library.length > 0) {
+          const totalSize = new Blob([JSON.stringify(library)]).size;
+          const sizeStr = totalSize > 1024 * 1024 
+            ? (totalSize / (1024 * 1024)).toFixed(1) + ' MB'
+            : (totalSize / 1024).toFixed(1) + ' KB';
+          storageInfo.textContent = library.length + ' stories - ' + sizeStr + ' used';
+        } else {
+          storageInfo.textContent = '';
+        }
 
-      if (library.length === 0) {
+        if (library.length === 0) {
+          container.innerHTML = `
+            <div class="library-empty">
+              <div class="library-empty-icon">📚</div>
+              <h3>No saved stories yet</h3>
+              <p>Create a story and tap "Save" to add it to your library!</p>
+            </div>
+          `;
+          return;
+        }
+
+        const sorted = [...library].sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+
         container.innerHTML = `
-          <div class="library-empty">
-            <div class="library-empty-icon">📚</div>
-            <h3>No saved stories yet</h3>
-            <p>Create a story and tap "Save" to add it to your library!</p>
+          <div class="library-grid">
+            ${sorted.map(item => {
+              const coverImage = item.story.pages[0]?.imageUrl;
+              const date = new Date(item.savedAt).toLocaleDateString();
+              return `
+                <div class="library-card" onclick="openSavedStory('${item.id}')">
+                  ${coverImage 
+                    ? `<img src="${coverImage}" alt="${item.story.title}" class="library-card-image">`
+                    : `<div class="library-card-placeholder">&#128214;</div>`
+                  }
+                  <div class="library-card-info">
+                    <div class="library-card-title">${item.story.title}</div>
+                    <div class="library-card-date">${date}</div>
+                  </div>
+                  <button class="library-card-delete" onclick="event.stopPropagation(); deleteStory('${item.id}')" title="Delete story">×</button>
+                </div>
+              `;
+            }).join('')}
           </div>
         `;
-        return;
-      }
-
-      const sorted = [...library].sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
-
-      container.innerHTML = `
-        <div class="library-grid">
-          ${sorted.map(item => {
-            const coverImage = item.story.pages[0]?.imageUrl;
-            const date = new Date(item.savedAt).toLocaleDateString();
-            return `
-              <div class="library-card" onclick="openSavedStory('${item.id}')">
-                ${coverImage 
-                  ? `<img src="${coverImage}" alt="${item.story.title}" class="library-card-image">`
-                  : `<div class="library-card-placeholder">&#128214;</div>`
-                }
-                <div class="library-card-info">
-                  <div class="library-card-title">${item.story.title}</div>
-                  <div class="library-card-date">${date}</div>
-                </div>
-                <button class="library-card-delete" onclick="event.stopPropagation(); deleteStory('${item.id}')" title="Delete story">×</button>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      `;
-    }
-
-    function openSavedStory(id) {
-      const library = getLibrary();
-      const item = library.find(i => i.id === id);
-      
-      if (item) {
-        story = item.story;
-        currentStoryId = id;
-        currentPage = 0;
-        totalPages = story.pages.length + 2;
-        isFromLibrary = true;
-        showScreen('book');
-        renderBook();
+      } catch (e) {
+        console.error('Error rendering library:', e);
+        container.innerHTML = `
+          <div class="library-empty">
+            <div class="library-empty-icon">⚠️</div>
+            <h3>Error loading library</h3>
+            <p>Please try refreshing the page.</p>
+          </div>
+        `;
       }
     }
 
-    function deleteStory(id) {
+    async function openSavedStory(id) {
+      try {
+        const item = await getStoryById(id);
+        
+        if (item) {
+          story = item.story;
+          currentStoryId = id;
+          currentPage = 0;
+          totalPages = story.pages.length + 2;
+          isFromLibrary = true;
+          showScreen('book');
+          renderBook();
+        }
+      } catch (e) {
+        console.error('Error opening story:', e);
+        showToast('Error opening story');
+      }
+    }
+
+    async function deleteStory(id) {
       if (!confirm('Are you sure you want to delete this story?')) return;
       
-      let library = getLibrary();
-      library = library.filter(item => item.id !== id);
-      saveLibrary(library);
-      renderLibrary();
-      showToast('🗑️ Story deleted');
+      try {
+        await deleteStoryFromDB(id);
+        await updateLibraryCount();
+        renderLibrary();
+        showToast('🗑️ Story deleted');
+      } catch (e) {
+        console.error('Error deleting story:', e);
+        showToast('Error deleting story');
+      }
     }
 
-    function toggleSaveStory() {
+    async function toggleSaveStory() {
       if (!story) return;
 
-      const library = getLibrary();
-      
-      if (currentStoryId) {
-        const newLibrary = library.filter(item => item.id !== currentStoryId);
-        saveLibrary(newLibrary);
-        currentStoryId = null;
-        updateSaveButtonState();
-        showToast('📖 Removed from library');
-      } else {
-        const id = generateStoryId();
-        library.push({
-          id: id,
-          story: story,
-          savedAt: new Date().toISOString()
-        });
-        saveLibrary(library);
-        currentStoryId = id;
-        updateSaveButtonState();
-        showToast('💾 Saved to library!');
+      try {
+        if (currentStoryId) {
+          await deleteStoryFromDB(currentStoryId);
+          currentStoryId = null;
+          updateSaveButtonState();
+          await updateLibraryCount();
+          showToast('📖 Removed from library');
+        } else {
+          const id = generateStoryId();
+          await addStoryToDB({
+            id: id,
+            story: story,
+            savedAt: new Date().toISOString()
+          });
+          currentStoryId = id;
+          updateSaveButtonState();
+          await updateLibraryCount();
+          showToast('💾 Saved to library!');
+        }
+      } catch (e) {
+        console.error('Error saving story:', e);
+        showToast('Error saving story');
       }
+    }
+
+    // ===== IMPORT/EXPORT FUNCTIONS =====
+
+    async function exportLibrary() {
+      try {
+        const library = await getLibrary();
+        
+        if (library.length === 0) {
+          showToast('No stories to export');
+          return;
+        }
+
+        const exportData = {
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          stories: library
+        };
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'whimsy-tales-library-' + new Date().toISOString().slice(0, 10) + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showToast('📤 Library exported!');
+      } catch (e) {
+        console.error('Export failed:', e);
+        showToast('Export failed');
+      }
+    }
+
+    async function importLibrary(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        
+        let stories = [];
+        
+        // Handle both new format (with version) and old format (array)
+        if (data.version && data.stories) {
+          stories = data.stories;
+        } else if (Array.isArray(data)) {
+          stories = data;
+        } else {
+          throw new Error('Invalid file format');
+        }
+
+        if (stories.length === 0) {
+          showToast('No stories found in file');
+          return;
+        }
+
+        // Get existing library to check for duplicates
+        const existing = await getLibrary();
+        const existingIds = new Set(existing.map(s => s.id));
+        
+        let imported = 0;
+        let skipped = 0;
+
+        for (const item of stories) {
+          // Validate story structure
+          if (!item.story || !item.story.title || !item.story.pages) {
+            skipped++;
+            continue;
+          }
+
+          // Generate new ID if duplicate or missing
+          if (!item.id || existingIds.has(item.id)) {
+            item.id = generateStoryId();
+          }
+
+          // Ensure savedAt exists
+          if (!item.savedAt) {
+            item.savedAt = new Date().toISOString();
+          }
+
+          await addStoryToDB(item);
+          existingIds.add(item.id);
+          imported++;
+        }
+
+        await updateLibraryCount();
+        renderLibrary();
+        
+        if (skipped > 0) {
+          showToast('📥 Imported ' + imported + ' stories (' + skipped + ' skipped)');
+        } else {
+          showToast('📥 Imported ' + imported + ' stories!');
+        }
+      } catch (e) {
+        console.error('Import failed:', e);
+        showToast('Import failed - invalid file');
+      }
+
+      // Reset file input
+      event.target.value = '';
     }
 
     function updateSaveButtonState() {
@@ -2184,10 +2498,14 @@ You will be creating ${pages.length} illustrations for this book. Each illustrat
       }
     }
 
-    function isStorySaved() {
+    async function isStorySaved() {
       if (!story) return false;
-      const library = getLibrary();
-      return library.some(item => item.story.title === story.title);
+      try {
+        const library = await getLibrary();
+        return library.some(item => item.story.title === story.title);
+      } catch (e) {
+        return false;
+      }
     }
 
     // Toast notification
