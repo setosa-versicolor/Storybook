@@ -1740,7 +1740,7 @@ The visualStyle will be prepended to each image prompt automatically, so each pa
       const pages = [...storyData.pages];
       
       const style = storyData.visualStyle;
-      const stylePrefix = `Children's book illustration series - MUST MAINTAIN EXACT CONSISTENCY:
+      const styleContext = `You are illustrating a children's book. Here is the visual style guide you MUST follow for ALL illustrations:
 
 ART STYLE: ${style.artStyle}
 COLOR PALETTE: ${style.colorPalette}
@@ -1749,16 +1749,17 @@ ${style.characters.supportingCharacters ? `SUPPORTING CHARACTERS: ${style.charac
 SETTING STYLE: ${style.settingStyle}
 MOOD/LIGHTING: ${style.moodAndLighting}
 
-THIS IS PAGE [PAGE_NUM] OF ${pages.length} IN THE SAME BOOK - maintain perfect visual consistency with all other pages.
+You will be creating ${pages.length} illustrations for this book. Each illustration MUST maintain perfect visual consistency with all others - same character designs, same art style, same color palette throughout.`;
 
-SCENE: `;
+      let previousResponseId = null;
 
       for (let i = 0; i < pages.length; i++) {
         setLoadingMessage(`Painting illustration ${i + 1} of ${pages.length}...`);
         try {
-          const fullPrompt = stylePrefix.replace('[PAGE_NUM]', i + 1) + pages[i].imagePrompt;
-          const imageUrl = await generateImage(fullPrompt);
-          pages[i].imageUrl = imageUrl;
+          const scenePrompt = `Draw page ${i + 1} of ${pages.length}: ${pages[i].imagePrompt}`;
+          const result = await generateImageWithResponses(styleContext, scenePrompt, previousResponseId, i === 0);
+          pages[i].imageUrl = result.imageUrl;
+          previousResponseId = result.responseId;
         } catch (err) {
           console.error(`Image ${i} failed:`, err);
           pages[i].imageUrl = null;
@@ -1769,29 +1770,40 @@ SCENE: `;
       return { ...storyData, pages };
     }
 
-    async function generateImage(prompt) {
-      const response = await fetch('https://api.openai.com/v1/images/generations', {
+    async function generateImageWithResponses(styleContext, scenePrompt, previousResponseId, isFirst) {
+      const requestBody = {
+        model: 'gpt-4o',
+        tools: [{ type: 'image_generation' }],
+        tool_choice: { type: 'image_generation' }
+      };
+
+      // First request includes the full style context
+      if (isFirst) {
+        requestBody.input = `${styleContext}\n\n${scenePrompt}`;
+      } else {
+        // Subsequent requests reference the previous response for context
+        requestBody.input = scenePrompt;
+        if (previousResponseId) {
+          requestBody.previous_response_id = previousResponseId;
+        }
+      }
+
+      const response = await fetch('https://api.openai.com/v1/responses', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify({
-          model: 'dall-e-3',
-          prompt: prompt,
-          n: 1,
-          size: '1024x1024',
-          quality: 'standard'
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
-        const error = new Error(errorData.error?.message || `Image API Error: ${response.status}`);
+        const error = new Error(errorData.error?.message || `Responses API Error: ${response.status}`);
         error.details = {
           status: response.status,
           statusText: response.statusText,
-          endpoint: 'Image Generations',
+          endpoint: 'Responses API (Image Generation)',
           response: errorData,
           timestamp: new Date().toISOString()
         };
@@ -1799,7 +1811,21 @@ SCENE: `;
       }
 
       const data = await response.json();
-      return data.data[0].url;
+      
+      // Extract the image from the response
+      const imageOutput = data.output?.find(item => item.type === 'image_generation_call');
+      if (!imageOutput || !imageOutput.result) {
+        throw new Error('No image was generated in the response');
+      }
+
+      // The result is base64 encoded - convert to data URL
+      const base64Image = imageOutput.result;
+      const imageUrl = `data:image/png;base64,${base64Image}`;
+
+      return {
+        imageUrl: imageUrl,
+        responseId: data.id
+      };
     }
 
     // Enhanced error display
