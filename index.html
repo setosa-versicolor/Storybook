@@ -411,6 +411,67 @@
       color: #1565c0;
     }
 
+    /* Gemini tier selector */
+    .gemini-tier-selector {
+      margin: 1rem 0;
+    }
+
+    .tier-label {
+      display: block;
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      color: var(--soft-purple);
+      margin-bottom: 0.5rem;
+    }
+
+    .tier-options {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .tier-option {
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .tier-option input {
+      display: none;
+    }
+
+    .tier-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.75rem;
+      background: var(--parchment);
+      border: 2px solid var(--parchment);
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .tier-option input:checked + .tier-card {
+      background: white;
+      border-color: var(--deep-purple);
+    }
+
+    .tier-option:hover .tier-card {
+      border-color: var(--soft-purple);
+    }
+
+    .tier-name {
+      font-family: var(--font-ui);
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--deep-purple);
+    }
+
+    .tier-desc {
+      font-family: var(--font-ui);
+      font-size: 0.7rem;
+      color: #888;
+      margin-top: 0.15rem;
+    }
+
     .library-empty {
       text-align: center;
       padding: 3rem 1rem;
@@ -1662,6 +1723,27 @@
             <input type="password" id="gemini-key-input" class="api-input" placeholder="AIza..." autocomplete="off">
             <button type="button" class="toggle-visibility" onclick="toggleKeyVisibility('gemini-key-input')">👁️</button>
           </div>
+          
+          <div class="gemini-tier-selector">
+            <label class="tier-label">Model Tier:</label>
+            <div class="tier-options">
+              <label class="tier-option">
+                <input type="radio" name="gemini-tier" value="flash" id="tier-flash" checked>
+                <span class="tier-card">
+                  <span class="tier-name">2.5 Flash</span>
+                  <span class="tier-desc">Fast &amp; affordable</span>
+                </span>
+              </label>
+              <label class="tier-option">
+                <input type="radio" name="gemini-tier" value="pro" id="tier-pro">
+                <span class="tier-card">
+                  <span class="tier-name">3 Pro</span>
+                  <span class="tier-desc">Higher quality</span>
+                </span>
+              </label>
+            </div>
+          </div>
+          
           <div class="modal-actions">
             <button type="button" class="btn-secondary" onclick="hideModal()">Cancel</button>
             <button type="submit" class="btn-primary">Save &amp; Use Gemini</button>
@@ -1702,6 +1784,7 @@
     // State
     let openaiKey = localStorage.getItem('openai_api_key') || '';
     let geminiKey = localStorage.getItem('gemini_api_key') || '';
+    let geminiTier = localStorage.getItem('gemini_tier') || 'flash'; // 'flash' or 'pro'
     let activeProvider = localStorage.getItem('active_provider') || 'openai'; // 'openai' or 'gemini'
     let story = null;
     let currentPage = 0;
@@ -1740,6 +1823,9 @@
     function showModal() {
       document.getElementById('openai-key-input').value = openaiKey;
       document.getElementById('gemini-key-input').value = geminiKey;
+      // Set the tier radio button
+      document.getElementById('tier-flash').checked = geminiTier === 'flash';
+      document.getElementById('tier-pro').checked = geminiTier === 'pro';
       switchModelTab(activeProvider);
       updateModalStatus();
       document.getElementById('modal').classList.add('visible');
@@ -1803,6 +1889,9 @@
         if (provider === 'gemini') {
           geminiKey = key;
           localStorage.setItem('gemini_api_key', key);
+          // Save the tier selection
+          geminiTier = document.querySelector('input[name="gemini-tier"]:checked').value;
+          localStorage.setItem('gemini_tier', geminiTier);
         } else {
           openaiKey = key;
           localStorage.setItem('openai_api_key', key);
@@ -1826,7 +1915,10 @@
       const hasKey = getActiveApiKey();
 
       if (hasKey) {
-        const providerName = activeProvider === 'gemini' ? 'Gemini' : 'OpenAI';
+        let providerName = activeProvider === 'gemini' ? 'Gemini' : 'OpenAI';
+        if (activeProvider === 'gemini') {
+          providerName += geminiTier === 'pro' ? ' 3 Pro' : ' 2.5';
+        }
         const providerIcon = activeProvider === 'gemini' ? '\uD83C\uDF4C' : '\uD83E\uDD16';
         btn.innerHTML = '<span>' + providerIcon + '</span> ' + providerName + ' Active';
         btn.classList.add('has-key');
@@ -2109,7 +2201,10 @@ Respond with ONLY a valid JSON object (no markdown, no code fences):
   ]
 }`;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
+      // Select model based on tier
+      const textModel = geminiTier === 'pro' ? 'gemini-3-pro-preview' : 'gemini-2.5-flash';
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${textModel}:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -2247,7 +2342,11 @@ You will be creating ${pages.length} illustrations for this book. Each illustrat
         });
       }
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-image-generation:generateContent?key=${geminiKey}`, {
+      // Select image model based on tier
+      const imageModel = geminiTier === 'pro' ? 'gemini-3-pro-image-preview' : 'gemini-2.5-flash-image';
+      const modelLabel = geminiTier === 'pro' ? 'Nano Banana Pro' : 'Nano Banana';
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${imageModel}:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -2266,7 +2365,7 @@ You will be creating ${pages.length} illustrations for this book. Each illustrat
         error.details = {
           status: response.status,
           statusText: response.statusText,
-          endpoint: 'Gemini Image Generation (Nano Banana)',
+          endpoint: `Gemini Image Generation (${modelLabel})`,
           response: errorData,
           timestamp: new Date().toISOString()
         };
