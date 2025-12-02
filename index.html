@@ -1791,7 +1791,7 @@ body {
       const geminiStatus = document.getElementById('status-gemini');
       
       if (openaiKey) {
-        openaiStatus.textContent = activeProvider === 'openai' ? '✓ Active' : '✓ Ready';
+        openaiStatus.textContent = activeProvider === 'openai' ? '\u2713 Active' : '\u2713 Ready';
         openaiStatus.classList.add('configured');
       } else {
         openaiStatus.textContent = 'Not configured';
@@ -1799,7 +1799,7 @@ body {
       }
       
       if (geminiKey) {
-        geminiStatus.textContent = activeProvider === 'gemini' ? '✓ Active' : '✓ Ready';
+        geminiStatus.textContent = activeProvider === 'gemini' ? '\u2713 Active' : '\u2713 Ready';
         geminiStatus.classList.add('configured');
       } else {
         geminiStatus.textContent = 'Not configured';
@@ -1845,13 +1845,13 @@ body {
 
       if (hasKey) {
         const providerName = activeProvider === 'gemini' ? 'Gemini' : 'OpenAI';
-        const providerIcon = activeProvider === 'gemini' ? '🍌' : '🤖';
+        const providerIcon = activeProvider === 'gemini' ? '\uD83C\uDF4C' : '\uD83E\uDD16';
         btn.innerHTML = '<span>' + providerIcon + '</span> ' + providerName + ' Active';
         btn.classList.add('has-key');
         hint.style.display = 'none';
         submitBtn.disabled = !prompt.value.trim();
       } else {
-        btn.innerHTML = '<span>🔑</span> Set Up API Key';
+        btn.innerHTML = '<span>&#128273;</span> Set Up API Key';
         btn.classList.remove('has-key');
         hint.textContent = 'Please add an API key to create stories';
         hint.style.display = 'block';
@@ -2678,7 +2678,7 @@ async function renderLibrary() {
     if (library.length === 0) {
       container.innerHTML = `
         <div class="library-empty">
-          <div class="library-empty-icon">📚</div>
+          <div class="library-empty-icon">&#128218;</div>
           <h3>No saved stories yet</h3>
           <p>Create a story and tap "Save" to add it to your library!</p>
         </div>
@@ -2703,7 +2703,7 @@ async function renderLibrary() {
                 <div class="library-card-title">${item.story.title}</div>
                 <div class="library-card-date">${date}</div>
               </div>
-              <button class="library-card-delete" onclick="event.stopPropagation(); deleteStory('${item.id}')" title="Delete story">×</button>
+              <button class="library-card-delete" onclick="event.stopPropagation(); deleteStory('${item.id}')" title="Delete story">&#215;</button>
             </div>
           `;
         }).join('')}
@@ -2713,7 +2713,7 @@ async function renderLibrary() {
     console.error('Error rendering library:', e);
     container.innerHTML = `
       <div class="library-empty">
-        <div class="library-empty-icon">⚠️</div>
+        <div class="library-empty-icon">&#9888;&#65039;</div>
         <h3>Error loading library</h3>
         <p>Please try refreshing the page.</p>
       </div>
@@ -2747,7 +2747,7 @@ async function deleteStory(id) {
     await deleteStoryFromDB(id);
     await updateLibraryCount();
     renderLibrary();
-    showToast('🗑️ Story deleted');
+    showToast('\uD83D\uDDD1\uFE0F Story deleted');
   } catch (e) {
     console.error('Error deleting story:', e);
     showToast('Error deleting story');
@@ -2763,7 +2763,7 @@ async function toggleSaveStory() {
       currentStoryId = null;
       updateSaveButtonState();
       await updateLibraryCount();
-      showToast('📖 Removed from library');
+      showToast('\uD83D\uDCD6 Removed from library');
     } else {
       const id = generateStoryId();
       await addStoryToDB({
@@ -2774,7 +2774,7 @@ async function toggleSaveStory() {
       currentStoryId = id;
       updateSaveButtonState();
       await updateLibraryCount();
-      showToast('💾 Saved to library!');
+      showToast('\uD83D\uDCBE Saved to library!');
     }
   } catch (e) {
     console.error('Error saving story:', e);
@@ -2809,7 +2809,7 @@ async function exportLibrary() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    showToast('📤 Library exported!');
+    showToast('\uD83D\uDCE4 Library exported!');
   } catch (e) {
     console.error('Export failed:', e);
     showToast('Export failed');
@@ -2873,9 +2873,9 @@ async function importLibrary(event) {
     renderLibrary();
     
     if (skipped > 0) {
-      showToast('📥 Imported ' + imported + ' stories (' + skipped + ' skipped)');
+      showToast('\uD83D\uDCE5 Imported ' + imported + ' stories (' + skipped + ' skipped)');
     } else {
-      showToast('📥 Imported ' + imported + ' stories!');
+      showToast('\uD83D\uDCE5 Imported ' + imported + ' stories!');
     }
   } catch (e) {
     console.error('Import failed:', e);
@@ -2893,11 +2893,11 @@ function updateSaveButtonState() {
   
   if (currentStoryId) {
     saveBtn.classList.add('saved');
-    saveIcon.textContent = '✓';
+    saveIcon.textContent = '\u2713';
     saveText.textContent = 'Saved';
   } else {
     saveBtn.classList.remove('saved');
-    saveIcon.textContent = '💾';
+    saveIcon.textContent = '\uD83D\uDCBE';
     saveText.textContent = 'Save';
   }
 }
