@@ -2309,15 +2309,40 @@ You will be creating ${pages.length} illustrations for this book. Each illustrat
 
       for (let i = 0; i < pages.length; i++) {
         setLoadingMessage(`Painting illustration ${i + 1} of ${pages.length}...`);
-        try {
-          const scenePrompt = `Draw page ${i + 1} of ${pages.length}: ${pages[i].imagePrompt}`;
-          const result = await generateGeminiImage(styleContext, scenePrompt, conversationHistory, i === 0);
-          pages[i].imageUrl = result.imageUrl;
-          conversationHistory = result.history;
-        } catch (err) {
-          console.error(`Gemini Image ${i} failed:`, err);
+        
+        // Retry logic for rate limiting
+        let retries = 3;
+        let lastError = null;
+        
+        while (retries > 0) {
+          try {
+            const scenePrompt = `Draw page ${i + 1} of ${pages.length}: ${pages[i].imagePrompt}`;
+            const result = await generateGeminiImage(styleContext, scenePrompt, conversationHistory, i === 0);
+            pages[i].imageUrl = result.imageUrl;
+            conversationHistory = result.history;
+            lastError = null;
+            break; // Success, exit retry loop
+          } catch (err) {
+            lastError = err;
+            // Check if it's a rate limit error (429)
+            if (err.details?.status === 429 || err.message?.includes('429') || err.message?.includes('quota')) {
+              retries--;
+              if (retries > 0) {
+                setLoadingMessage(`Rate limited, waiting... (${retries} retries left)`);
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+                setLoadingMessage(`Painting illustration ${i + 1} of ${pages.length}...`);
+              }
+            } else {
+              // Non-rate-limit error, don't retry
+              break;
+            }
+          }
+        }
+        
+        if (lastError) {
+          console.error(`Gemini Image ${i} failed:`, lastError);
           pages[i].imageUrl = null;
-          pages[i].imageError = err.details || { message: err.message };
+          pages[i].imageError = lastError.details || { message: lastError.message };
         }
       }
 
