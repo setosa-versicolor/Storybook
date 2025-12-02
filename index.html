@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2254,8 +2255,7 @@ You will be creating ${pages.length} illustrations for this book. Each illustrat
         body: JSON.stringify({
           contents: contents,
           generationConfig: {
-            responseModalities: ['image', 'text'],
-            imageSafetySettings: 'block_low_and_above'
+            responseModalities: ['image', 'text']
           }
         })
       });
