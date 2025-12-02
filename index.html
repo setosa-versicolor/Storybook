@@ -2123,8 +2123,11 @@ Respond with ONLY a valid JSON object (no markdown, no code fences):
           }],
           generationConfig: {
             temperature: 0.9,
-            maxOutputTokens: 2000,
-            responseMimeType: 'application/json'
+            maxOutputTokens: 8192,
+            responseMimeType: 'application/json',
+            thinkingConfig: {
+              thinkingBudget: 2048
+            }
           }
         })
       });
