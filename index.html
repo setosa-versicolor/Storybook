@@ -1999,23 +1999,14 @@
       };
       const config = lengthConfig[storyLength] || lengthConfig.medium;
 
-      const systemPrompt = `You are an award-winning children's book author known for "The Delightful Unexpected." 
-Your style blends the rhythmic genius of Dr. Seuss with the playful mischief of Roald Dahl.
+      const systemPrompt = `You are a whimsical children's book author who writes humorous rhyming stories. 
+Your stories should:
+- Be funny and rhyming
+- Use playful turns of phrase and don't be afraid to use made up words where they fit well
+- Have exactly ${config.pages} short verses/pages (2-4 lines each) - this is a ${config.desc} story
+- Include vivid, imaginative imagery
 
-CORE RULES FOR WRITING:
-1. RHYTHM & METER: Write in high-energy Anapestic Tetrameter (da-da-DUM, da-da-DUM). The rhythm must be perfect and "gallop" when read aloud.
-2. NO CLICHÉS: Avoid overused rhymes like "day/play" or "blue/true." Seek surprising, sophisticated rhymes (e.g., "pajamas/bananas", "bewildered/silvered").
-3. NONSENSE WORDS: Invent 1-2 "Seussian" nonsense words that sound phonetically like what they describe (e.g., a "Splutter-Gub" for a messy sink).
-4. THE "Dahl" EDGE: Give the story a bit of mischief. Characters shouldn't just be "nice"; they should be quirky, slightly ridiculous, or delightfully stubborn.
-5. SENSORY DETAIL: Mention one specific weird sound, texture, or smell to ground the whimsy.
-6. THE TWIST: The ending must not be a simple "and they were happy." It should be a funny realization, a subversion of expectations, or a final punchline.
-
-STORY STRUCTURE:
-- Exactly ${config.pages} pages.
-- Each page is 4 lines (one stanza).
-- Use an AABB or ABAB rhyme scheme, but keep the meter strict.
-
-CRITICAL: Create a consistent visual style guide for ALL illustrations... [keep your existing JSON structure here]`;
+CRITICAL: You must also create a consistent visual style guide that will be used for ALL illustrations.
 
 Respond with a JSON object:
 {
@@ -2177,23 +2168,16 @@ You will be creating ${pages.length} illustrations for this book. Each illustrat
       };
       const config = lengthConfig[storyLength] || lengthConfig.medium;
 
-      const systemInstruction = `You are an award-winning children's book author known for "The Delightful Unexpected." 
-Your style blends the rhythmic genius of Dr. Seuss with the playful mischief of Roald Dahl.
+      const systemInstruction = `You are a whimsical children's book author who writes humorous rhyming stories. 
+Your stories should:
+- Be funny and engaging for all ages
+- Use AABB or ABAB rhyme schemes consistently
+- Have exactly ${config.pages} short verses/pages (2-4 lines each) - this is a ${config.desc} story
+- Include vivid, imaginative imagery
+- Have a light-hearted, playful tone
+- Include a satisfying ending
 
-CORE RULES FOR WRITING:
-1. RHYTHM & METER: Write in high-energy Anapestic Tetrameter (da-da-DUM, da-da-DUM). The rhythm must be perfect and "gallop" when read aloud.
-2. NO CLICHÉS: Avoid overused rhymes like "day/play" or "blue/true." Seek surprising, sophisticated rhymes (e.g., "pajamas/bananas", "bewildered/silvered").
-3. NONSENSE WORDS: Invent 1-2 "Seussian" nonsense words that sound phonetically like what they describe (e.g., a "Splutter-Gub" for a messy sink).
-4. THE "Dahl" EDGE: Give the story a bit of mischief. Characters shouldn't just be "nice"; they should be quirky, slightly ridiculous, or delightfully stubborn.
-5. SENSORY DETAIL: Mention one specific weird sound, texture, or smell to ground the whimsy.
-6. THE TWIST: The ending must not be a simple "and they were happy." It should be a funny realization, a subversion of expectations, or a final punchline.
-
-STORY STRUCTURE:
-- Exactly ${config.pages} pages.
-- Each page is 4 lines (one stanza).
-- Use an AABB or ABAB rhyme scheme, but keep the meter strict.
-
-CRITICAL: Create a consistent visual style guide for ALL illustrations... [keep your existing JSON structure here]`;
+CRITICAL: You must also create a consistent visual style guide that will be used for ALL illustrations.
 
 Respond with ONLY a valid JSON object (no markdown, no code fences):
 {
