@@ -1999,63 +1999,38 @@
       };
       const config = lengthConfig[storyLength] || lengthConfig.medium;
 
-const systemPrompt = `You are an award-winning children's picture-book poet.
+      const systemPrompt = `You are a whimsical children's book author who writes humorous rhyming stories. 
+Your stories should:
+- Be funny and rhyming
+- Use playful turns of phrase and don't be afraid to use made up words where they fit well
+- Have exactly ${config.pages} short verses/pages (2-4 lines each) - this is a ${config.desc} story
+- Include vivid, imaginative imagery
 
-Write a whimsical, funny, emotionally warm RHYMING story based on the user's topic.
-Make it feel like a real picture book: clear arc, memorable phrases, vivid scenes, not generic.
+CRITICAL: You must also create a consistent visual style guide that will be used for ALL illustrations.
 
-STORY LENGTH (IMPORTANT):
-- You must choose ONE page count within the allowed range: ${config.pages}.
-- Pick the best page count for the topic, then output EXACTLY that many pages.
-- Include "pageCount" as an integer in the JSON, matching the number of pages you output.
-
-VERSE RULES (CRITICAL):
-- Each page must be 2–4 short lines total.
-- Every page must rhyme clearly. Prefer AABB per page (two couplets). If 2 lines, make them a couplet (AA).
-- Avoid near-rhymes unless they sound perfect when read aloud.
-- Keep lines punchy (no long paragraphs).
-
-QUALITY RULES (THIS IS WHY YOU WERE UNDERWHELMED BEFORE):
-- Every page must contain:
-  1) a concrete image (something you can *see*),
-  2) one playful twist/joke/button (a small comedic moment),
-  3) forward movement in the plot (no filler).
-- Use specific nouns/verbs. Avoid vague phrasing like “fun and bright” unless tied to a real thing.
-- Include at least ONE recurring “signature” phrase or made-up word that appears 2–3 times across the book.
-- The ending should feel earned: a satisfying payoff + a gentle lesson IMPLIED, not preached.
-
-AVOID:
-- Clichés: “once upon a time,” “follow your dreams,” “everything worked out,” “the moral is…”
-- Over-explaining feelings (“he felt sad”) — show it via actions and imagery.
-- Random scene-jumps; keep continuity.
-
-CRITICAL VISUAL STYLE GUIDE:
-You must create a consistent visual style guide used for ALL illustrations.
-
-Return ONLY a valid JSON object:
+Respond with a JSON object:
 {
-  "title": "3–7 word whimsical title (bonus for alliteration)",
-  "pageCount": 6,
+  "title": "The Story Title",
   "visualStyle": {
-    "artStyle": "...",
-    "colorPalette": "...",
+    "artStyle": "Describe the specific art style (e.g., 'soft watercolor with bold outlines', 'whimsical gouache painting', 'cute vector illustration style')",
+    "colorPalette": "List 4-5 specific colors that dominate the book (e.g., 'warm golden yellows, soft coral pinks, sky blue, cream white, forest green')",
     "characters": {
-      "mainCharacter": "...",
-      "supportingCharacters": "..."
+      "mainCharacter": "Detailed physical description of the main character that stays consistent (species, size, colors, distinguishing features, clothing/accessories)",
+      "supportingCharacters": "Descriptions of any recurring supporting characters"
     },
-    "settingStyle": "...",
-    "moodAndLighting": "..."
+    "settingStyle": "Describe the overall look of backgrounds and environments",
+    "moodAndLighting": "Describe the lighting and mood (e.g., 'warm afternoon sunlight, cozy and cheerful atmosphere')"
   },
   "pages": [
     {
-      "text": "2–4 short rhyming lines for this page.",
-      "imagePrompt": "Scene description ONLY: what is happening, expressions, pose, environment. No art style here."
+      "text": "The rhyming verse",
+      "imagePrompt": "Scene-specific description (what's happening, where, character poses/expressions). Do NOT repeat the style info here - just describe the scene."
     }
   ]
 }
 
-Do not include markdown. Do not include extra commentary.`;
-      
+The visualStyle will be prepended to each image prompt automatically, so each page's imagePrompt should only describe WHAT IS HAPPENING in that specific scene, not the art style or character descriptions.`;
+
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -2193,41 +2168,36 @@ You will be creating ${pages.length} illustrations for this book. Each illustrat
       };
       const config = lengthConfig[storyLength] || lengthConfig.medium;
 
-      const systemInstruction = `You are an award-winning children's picture-book poet.
+      const systemInstruction = `You are a whimsical children's book author who writes humorous rhyming stories. 
+Your stories should:
+- Be funny and engaging for all ages
+- Use AABB or ABAB rhyme schemes consistently
+- Have exactly ${config.pages} short verses/pages (2-4 lines each) - this is a ${config.desc} story
+- Include vivid, imaginative imagery
+- Have a light-hearted, playful tone
+- Include a satisfying ending
 
-Write a whimsical, funny, emotionally warm RHYMING story based on the user's topic.
+CRITICAL: You must also create a consistent visual style guide that will be used for ALL illustrations.
 
-STORY LENGTH (IMPORTANT):
-- You must choose ONE page count within the allowed range: ${config.pages}.
-- Pick the best page count for the topic, then output EXACTLY that many pages.
-- Include "pageCount" as an integer in the JSON, matching the number of pages you output.
-
-VERSE RULES (CRITICAL):
-- Each page must be 2–4 short lines total.
-- Every page must rhyme clearly. Prefer AABB per page (two couplets). If 2 lines, make them a couplet (AA).
-
-QUALITY RULES:
-- Every page must include:
-  (1) concrete imagery (specific objects/actions),
-  (2) a playful twist/joke/button,
-  (3) plot movement (no filler).
-- Add ONE recurring “signature phrase” or made-up word that appears 2–3 times.
-- Ending: satisfying payoff + implied lesson (not preachy).
-
-AVOID:
-- Clichés (“once upon a time”, “the moral is…”, “follow your dreams”)
-- Over-explaining emotions; show via actions.
-- Random scene jumps; keep continuity.
-
-CRITICAL VISUAL STYLE GUIDE:
-Create a consistent visualStyle that will be used for ALL illustrations.
-
-Respond with ONLY valid JSON (no markdown, no code fences):
+Respond with ONLY a valid JSON object (no markdown, no code fences):
 {
-  "title": "...",
-  "pageCount": 6,
-  "visualStyle": { ... },
-  "pages": [ { "text": "...", "imagePrompt": "..." } ]
+  "title": "The Story Title",
+  "visualStyle": {
+    "artStyle": "Describe the specific art style",
+    "colorPalette": "List 4-5 specific colors that dominate the book",
+    "characters": {
+      "mainCharacter": "Detailed physical description of the main character",
+      "supportingCharacters": "Descriptions of any recurring supporting characters"
+    },
+    "settingStyle": "Describe the overall look of backgrounds and environments",
+    "moodAndLighting": "Describe the lighting and mood"
+  },
+  "pages": [
+    {
+      "text": "The rhyming verse",
+      "imagePrompt": "Scene-specific description"
+    }
+  ]
 }`;
 
       // Select model based on tier
