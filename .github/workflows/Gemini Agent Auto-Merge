@@ -19,6 +19,8 @@ jobs:
       - name: Run Gemini CLI
         id: gemini
         uses: google-github-actions/run-gemini-cli@v1
+        env: 
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
