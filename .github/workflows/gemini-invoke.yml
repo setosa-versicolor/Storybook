@@ -120,3 +120,6 @@ jobs:
               }
             }
           prompt: '/gemini-invoke'
+
+env:
+  GEMINI_CLI_TRUST_WORKSPACE: 'true'

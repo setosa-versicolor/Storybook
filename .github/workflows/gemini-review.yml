@@ -114,3 +114,6 @@ jobs:
               "https://github.com/gemini-cli-extensions/code-review"
             ]
           prompt: '/pr-code-review'
+
+env:
+  GEMINI_CLI_TRUST_WORKSPACE: 'true'

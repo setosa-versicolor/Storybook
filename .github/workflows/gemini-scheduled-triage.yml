@@ -218,3 +218,6 @@ jobs:
                 labels: labelsToSet,
               });
             }
+
+env:
+  GEMINI_CLI_TRUST_WORKSPACE: 'true'

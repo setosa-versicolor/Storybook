@@ -219,3 +219,6 @@ jobs:
           gh issue comment "${ISSUE_NUMBER}" \
             --body "${MESSAGE}" \
             --repo "${REPOSITORY}"
+
+env:
+  GEMINI_CLI_TRUST_WORKSPACE: 'true'
