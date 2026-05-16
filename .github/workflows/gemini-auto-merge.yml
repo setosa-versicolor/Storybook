@@ -1,0 +1,41 @@
+name: '🤝 Gemini Auto-Merge'
+
+on:
+  issue_comment:
+    types:
+      - 'created'
+
+defaults:
+  run:
+    shell: 'bash'
+
+jobs:
+  enable-auto-merge:
+    if: |-
+      github.event.issue.pull_request != null &&
+      github.event.sender.type == 'User' &&
+      startsWith(github.event.comment.body, '@gemini-cli /auto-merge') &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+    runs-on: 'ubuntu-latest'
+    permissions:
+      contents: 'write'
+      pull-requests: 'write'
+    steps:
+      - name: 'Enable auto-merge on PR'
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+          PR_NUMBER: '${{ github.event.issue.number }}'
+          REPO: '${{ github.repository }}'
+        run: |-
+          gh pr merge "${PR_NUMBER}" --repo "${REPO}" --auto --merge
+
+      - name: 'Acknowledge'
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+          PR_NUMBER: '${{ github.event.issue.number }}'
+          REPO: '${{ github.repository }}'
+          ACTOR: '${{ github.actor }}'
+        run: |-
+          gh pr comment "${PR_NUMBER}" \
+            --repo "${REPO}" \
+            --body "🤝 @${ACTOR} requested auto-merge. This PR will merge automatically once required checks pass."
