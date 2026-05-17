@@ -106,5 +106,14 @@ jobs:
             ]
           prompt: '/pr-code-review'
 
+      - name: 'Upload Gemini telemetry on failure'
+        if: always()
+        uses: 'actions/upload-artifact@v4'
+        with:
+          name: 'gemini-telemetry-failed-${{ github.run_id }}-${{ github.run_attempt }}'
+          path: '.gemini/'
+          if-no-files-found: 'ignore'
+          retention-days: 14
+
 env:
   GEMINI_CLI_TRUST_WORKSPACE: 'true'
