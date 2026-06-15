@@ -1241,7 +1241,8 @@
 
     .page-image-container {
       flex: 1;
-      min-height: 0;
+      min-height: 40%;
+      max-height: 60%;
       border-radius: 8px;
       overflow: hidden;
       background: var(--parchment);
@@ -1267,10 +1268,11 @@
 
     .page-text-container {
       padding: 0.75rem 0.5rem;
-      min-height: 25%;
+      min-height: 30%;
+      max-height: 50%;
       display: flex;
-      align-items: center;
-      justify-content: center;
+      flex-direction: column;
+      overflow-y: auto;
     }
 
     .page-text {
@@ -1279,6 +1281,7 @@
       line-height: 1.6;
       text-align: center;
       color: var(--ink);
+      margin: auto 0;
     }
 
     .page-number {
@@ -1617,10 +1620,14 @@
       }
       .page-image-container {
         flex: 1;
+        min-height: 0;
+        max-height: none;
       }
 
       .page-text-container {
         flex: 1;
+        min-height: 0;
+        max-height: none;
       }
     }
   </style>
@@ -2691,10 +2698,12 @@ You will be creating ${pages.length} illustrations for this book. Each illustrat
           ? `<img src="${page.imageUrl}" alt="Illustration" class="page-image">`
           : `<div class="page-image-placeholder">&#127912;<br><small style="font-size: 0.5em;">Image failed</small></div>`;
 
+        const formattedText = page.text.split('\n').join('<br><br>');
+
         pageEl.innerHTML = `
           <div class="page-image-container">${imageHtml}</div>
           <div class="page-text-container">
-            <p class="page-text">${page.text}</p>
+            <p class="page-text">${formattedText}</p>
           </div>
           <span class="page-number">${currentPage}</span>
         `;
